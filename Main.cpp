@@ -174,19 +174,19 @@ public:
 			vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
 		}
 		//Left stick
-		else if ((bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(-1, 1))) && GetKey(olc::Key::A).bHeld)
+		if ((bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(-1, 1))) && GetKey(olc::Key::A).bHeld)
 		{
 			vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
 			vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
 		}
 		//Right stick
-		else if ((bTestForCollision(olc::vf2d(-1, 1)) || bTestForCollision(olc::vf2d(1, 1))) && GetKey(olc::Key::S).bHeld)
+		if ((bTestForCollision(olc::vf2d(-1, 1)) || bTestForCollision(olc::vf2d(1, 1))) && GetKey(olc::Key::S).bHeld)
 		{
 			vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
 			vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
 		}
 		//Bottom stick
-		else if ((bTestForCollision(olc::vf2d(1, 1)) || bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::D).bHeld)
+		if ((bTestForCollision(olc::vf2d(1, 1)) || bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::D).bHeld)
 		{
 			vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
 			vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
