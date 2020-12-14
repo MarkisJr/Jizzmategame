@@ -24,6 +24,7 @@
     <ProjectGuid>{2a0ea4cd-decc-458c-9312-eec599c0ac85}</ProjectGuid>
     <RootNamespace>TheDissolutionJizzmate</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>The Dissolution of Jizzmate</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

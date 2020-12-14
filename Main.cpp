@@ -1,7 +1,5 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
-#include <cstdlib>
-#include <ctime>
 
 class JizzMate : public olc::PixelGameEngine
 {
@@ -17,11 +15,16 @@ private:
 	std::array<std::array<int, 11>, 11> roomStructure = { {0} };
 	std::unique_ptr<olc::Sprite> sprTile;
 
+	//Unique variables
+	float fFriction = -400.0f;
+
 	//Player variables
 	olc::vf2d vPlayerPosition = { 32.0f, 160.0f };
 	olc::vf2d vPlayerDir;
-	olc::vf2d vPlayerSize = { 32.0f, 32.0f };
+	olc::vf2d vPlayerDirState;
+	olc::vf2d vPlayerSize = { 24.0f, 24.0f };
 	float fPlayerRadius = vPlayerSize.x / 2;
+	std::unique_ptr<olc::Sprite> sprPlayer;
 
 public:
 	bool OnUserCreate() override
@@ -50,6 +53,9 @@ public:
 		
 		//Load tile textures
 		sprTile = std::make_unique<olc::Sprite>("./spriteTiles.png");
+
+		//Load player textures
+		sprPlayer = std::make_unique<olc::Sprite>("./spritePlayer.png");
 		return true;
 	}
 
@@ -80,13 +86,60 @@ public:
 		}
 
 		//Draw player
-		// TODO: Make player sprite sheet independant of tile sprite sheet
 		//Player movement
-		vPlayerDir = { 0.0f, 0.0f };
-		if (GetKey(olc::Key::W).bHeld) vPlayerDir += olc::vf2d(0.0f, -100.0f);
-		if (GetKey(olc::Key::A).bHeld) vPlayerDir += olc::vf2d(-100.0f, 0.0f);
-		if (GetKey(olc::Key::S).bHeld) vPlayerDir += olc::vf2d(0.0f, 100.0f);
-		if (GetKey(olc::Key::D).bHeld) vPlayerDir += olc::vf2d(100.0f, 0.0f);
+		//Check and change velocity for intertia
+		if (vPlayerDir.x < 0.0f)
+		{
+			vPlayerDirState += olc::vf2d(-1.0f, 0.0f);
+			vPlayerDir = { vPlayerDir.x * -1.0f, vPlayerDir.y };
+		}
+		else 
+		{
+			vPlayerDirState += olc::vf2d(1.0f, 0.0f);
+		}
+		if (vPlayerDir.y < 0.0f)
+		{
+			vPlayerDirState += olc::vf2d(0.0f, -1.0f);
+			vPlayerDir = { vPlayerDir.x, vPlayerDir.y * -1.0f };
+		}
+		else
+		{
+			vPlayerDirState += olc::vf2d(0.0f, 1.0f);
+		}
+
+		//Friction (could work with or statement??)
+		if ((vPlayerDir.x + fFriction * fElapsedTime) > 0.0f)
+			vPlayerDir = { (vPlayerDir.x + fFriction * fElapsedTime) * vPlayerDirState.x, vPlayerDir.y };
+		else
+			vPlayerDir = { 0.0f, vPlayerDir.y };
+
+		if ((vPlayerDir.y + fFriction * fElapsedTime) > 0.0f)
+			vPlayerDir = { vPlayerDir.x, (vPlayerDir.y + fFriction * fElapsedTime) * vPlayerDirState.y };
+		else vPlayerDir = { vPlayerDir.x, 0.0f };
+
+		vPlayerDirState = { 0.0f, 0.0f };
+		
+		//Check for key press
+		if (GetKey(olc::Key::W).bHeld)
+		{
+			vPlayerDir = olc::vf2d(vPlayerDir.x, 0.0f);
+			vPlayerDir += olc::vf2d(0.0f, -100.0f);
+		}
+		if (GetKey(olc::Key::A).bHeld)
+		{
+			vPlayerDir = olc::vf2d(0.0f, vPlayerDir.y);
+			vPlayerDir += olc::vf2d(-100.0f, 0.0f);
+		}
+		if (GetKey(olc::Key::S).bHeld)
+		{
+			vPlayerDir = olc::vf2d(vPlayerDir.x, 0.0f);
+			vPlayerDir += olc::vf2d(0.0f, 100.0f);
+		}
+		if (GetKey(olc::Key::D).bHeld)
+		{
+			vPlayerDir = olc::vf2d(0.0f, vPlayerDir.y);
+			vPlayerDir += olc::vf2d(100.0f, 0.0f);
+		}
 
 		//Test for collision
 		olc::vf2d vPlayerPotentialPos = vPlayerPosition + (vPlayerDir * fElapsedTime);
@@ -94,11 +147,16 @@ public:
 		auto bTestForCollision = [&](const olc::vf2d& point)
 		{
 			
-			olc::vi2d vTestPoint = vPlayerPotentialCenter + point * fPlayerRadius + olc::vf2d(1, 1) * point;
+			olc::vi2d vTestPoint = vPlayerPotentialCenter + point * fPlayerRadius;
 			auto& tile = roomStructure[xQuadrant(vTestPoint)][yQuadrant(vTestPoint)];
 
 			if (tile == 0)
 			{
+				return false;
+			}
+			else if (tile == 2)
+			{
+				
 				return false;
 			}
 			else
@@ -107,10 +165,34 @@ public:
 			}
 		};
 
-		if (!(bTestForCollision(olc::vf2d(-1, -1)), bTestForCollision(olc::vf2d(1, -1)), bTestForCollision(olc::vf2d(-1, 1)), bTestForCollision(olc::vf2d(1, 1))))
+		if (!(bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(1, -1)) || bTestForCollision(olc::vf2d(-1, 1)) || bTestForCollision(olc::vf2d(1, 1))))
 			vPlayerPosition += vPlayerDir * fElapsedTime;
+		//Top stick
+		if ((bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::W).bHeld)
+		{
+			vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
+			vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
+		}
+		//Left stick
+		else if ((bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(-1, 1))) && GetKey(olc::Key::A).bHeld)
+		{
+			vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
+			vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
+		}
+		//Right stick
+		else if ((bTestForCollision(olc::vf2d(-1, 1)) || bTestForCollision(olc::vf2d(1, 1))) && GetKey(olc::Key::S).bHeld)
+		{
+			vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
+			vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
+		}
+		//Bottom stick
+		else if ((bTestForCollision(olc::vf2d(1, 1)) || bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::D).bHeld)
+		{
+			vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
+			vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
+		}
 
-		DrawPartialSprite(vPlayerPosition, sprTile.get(), olc::vi2d(4, 0) * vBlockSize, vBlockSize);
+		DrawPartialSprite(vPlayerPosition, sprPlayer.get(), olc::vi2d(0, 0) * vPlayerSize, vPlayerSize);
 		SetPixelMode(olc::Pixel::NORMAL);
 		return true;
 	}
