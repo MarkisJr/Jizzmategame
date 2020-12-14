@@ -16,7 +16,7 @@ private:
 	std::unique_ptr<olc::Sprite> sprTile;
 
 	//Unique variables
-	float fFriction = -400.0f;
+	float fFriction = -500.0f;
 
 	//Player variables
 	olc::vf2d vPlayerPosition = { 32.0f, 160.0f };
@@ -167,30 +167,30 @@ public:
 
 		if (!(bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(1, -1)) || bTestForCollision(olc::vf2d(-1, 1)) || bTestForCollision(olc::vf2d(1, 1))))
 			vPlayerPosition += vPlayerDir * fElapsedTime;
-		//Top stick
-		if ((bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::W).bHeld)
-		{
-			vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
-			vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
-		}
-		//Left stick
-		if ((bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(-1, 1))) && GetKey(olc::Key::A).bHeld)
-		{
-			vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
-			vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
-		}
-		//Right stick
-		if ((bTestForCollision(olc::vf2d(-1, 1)) || bTestForCollision(olc::vf2d(1, 1))) && GetKey(olc::Key::S).bHeld)
-		{
-			vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
-			vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
-		}
-		//Bottom stick
-		if ((bTestForCollision(olc::vf2d(1, 1)) || bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::D).bHeld)
-		{
-			vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
-			vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
-		}
+		////Top stick
+		//if ((bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::W).bHeld)
+		//{
+		//	vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
+		//	vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
+		//}
+		////Left stick
+		//if ((bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(-1, 1))) && GetKey(olc::Key::A).bHeld)
+		//{
+		//	vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
+		//	vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
+		//}
+		////Right stick
+		//if ((bTestForCollision(olc::vf2d(-1, 1)) || bTestForCollision(olc::vf2d(1, 1))) && GetKey(olc::Key::S).bHeld)
+		//{
+		//	vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
+		//	vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
+		//}
+		////Bottom stick
+		//if ((bTestForCollision(olc::vf2d(1, 1)) || bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::D).bHeld)
+		//{
+		//	vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
+		//	vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
+		//}
 
 		DrawPartialSprite(vPlayerPosition, sprPlayer.get(), olc::vi2d(0, 0) * vPlayerSize, vPlayerSize);
 		SetPixelMode(olc::Pixel::NORMAL);
