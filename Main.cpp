@@ -28,6 +28,7 @@ private:
 	std::unique_ptr<olc::Sprite> sprArtifacts;
 	int playerHealth = 3;
 	bool bInSpike = false;
+	olc::vf2d vTempDamagePoint = { 0.0f, 0.0f };
 
 	//Misc
 	olc::vi2d vArtifactSize = { 16, 16 };
@@ -179,12 +180,15 @@ public:
 
 			if (tile == 0 || tile == 2)
 			{
+				if (vTempDamagePoint == point)
+					bInSpike = false;
 				return false;
 			}
 			else if (tile == 4)
 			{
 				if (!bInSpike)
 				{
+					vTempDamagePoint = point;
 					playerHealth--;
 					bInSpike = true;
 				}
@@ -201,31 +205,31 @@ public:
 			vPlayerPosition += vPlayerDir * fElapsedTime;
 
 
-		//Old code that is meant to allow you to slide along walls but breaks when 3 or only 1 collision point triggers
-		//Top
-		if ((bTestForCollision(olc::vf2d(-1, -1)) && bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::W).bHeld)
-		{
-			vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
-			vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
-		}
-		//Left
-		if ((bTestForCollision(olc::vf2d(-1, -1)) && bTestForCollision(olc::vf2d(-1, 1))) && GetKey(olc::Key::A).bHeld)
-		{
-			vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
-			vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
-		}
-		//Right
-		if ((bTestForCollision(olc::vf2d(-1, 1)) && bTestForCollision(olc::vf2d(1, 1))) && GetKey(olc::Key::S).bHeld)
-		{
-			vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
-			vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
-		}
-		//Bottom
-		if ((bTestForCollision(olc::vf2d(1, 1)) && bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::D).bHeld)
-		{
-			vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
-			vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
-		}
+		////Old code that is meant to allow you to slide along walls but breaks when 3 or only 1 collision point triggers
+		////Top
+		//if ((bTestForCollision(olc::vf2d(-1, -1)) && bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::W).bHeld)
+		//{
+		//	vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
+		//	vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
+		//}
+		////Left
+		//if ((bTestForCollision(olc::vf2d(-1, -1)) && bTestForCollision(olc::vf2d(-1, 1))) && GetKey(olc::Key::A).bHeld)
+		//{
+		//	vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
+		//	vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
+		//}
+		////Right
+		//if ((bTestForCollision(olc::vf2d(-1, 1)) && bTestForCollision(olc::vf2d(1, 1))) && GetKey(olc::Key::S).bHeld)
+		//{
+		//	vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
+		//	vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
+		//}
+		////Bottom
+		//if ((bTestForCollision(olc::vf2d(1, 1)) && bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::D).bHeld)
+		//{
+		//	vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
+		//	vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
+		//}
 
 		DrawPartialSprite(vPlayerPosition, sprPlayer.get(), olc::vi2d(0, 0) * vPlayerSize, vPlayerSize);
 
@@ -239,6 +243,10 @@ public:
 		{
 			DrawPartialSprite(olc::vi2d(328 - i * 16, 8), sprArtifacts.get(), olc::vi2d(0, 0) * vArtifactSize, vArtifactSize);
 		}
+
+		//Death screen
+		if (playerHealth < 1)
+			return false;
 
 		SetPixelMode(olc::Pixel::NORMAL);
 		return true;
@@ -256,11 +264,6 @@ public:
 	{
 		int yTemp = (int)input.y / 32;
 		return yTemp;
-	}
-
-	void takeDamage()
-	{
-
 	}
 };
 
