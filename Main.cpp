@@ -25,6 +25,12 @@ private:
 	olc::vf2d vPlayerSize = { 24.0f, 24.0f };
 	float fPlayerRadius = vPlayerSize.x / 2;
 	std::unique_ptr<olc::Sprite> sprPlayer;
+	std::unique_ptr<olc::Sprite> sprArtifacts;
+	int playerHealth = 3;
+	bool bInSpike = false;
+
+	//Misc
+	olc::vi2d vArtifactSize = { 16, 16 };
 
 public:
 	bool OnUserCreate() override
@@ -42,13 +48,23 @@ public:
 		}
 		
 		//Create random pillars
-		for (int j = 0; j < rand() % 10 + 3; j++) 
+		for (int j = 0; j < rand() % 8 + 3; j++) 
 		{
-			retry:
+			retry_pillar:
 			int xTemp = rand() % 9 + 1;
 			int yTemp = rand() % 9 + 1;
-			if ((roomStructure[xTemp][yTemp] != 0) || (xTemp == 1 && yTemp == 5) || (xTemp == 9 && yTemp == 5)) goto retry;
+			if ((roomStructure[xTemp][yTemp] != 0) || (xTemp == 1 && yTemp == 5) || (xTemp == 9 && yTemp == 5)) goto retry_pillar;
 			else roomStructure[xTemp][yTemp] = 3;
+		}
+
+		//Create random spikes
+		for (int j = 0; j < rand() % 3 + 1; j++)
+		{
+		retry_spike:
+			int xTemp = rand() % 9 + 1;
+			int yTemp = rand() % 9 + 1;
+			if ((roomStructure[xTemp][yTemp] != 0) || (xTemp == 1 && yTemp == 5) || (xTemp == 9 && yTemp == 5)) goto retry_spike;
+			else roomStructure[xTemp][yTemp] = 4;
 		}
 		
 		//Load tile textures
@@ -56,14 +72,20 @@ public:
 
 		//Load player textures
 		sprPlayer = std::make_unique<olc::Sprite>("./spritePlayer.png");
+		sprArtifacts = std::make_unique<olc::Sprite>("./spriteArtifacts.png");
 		return true;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
 		SetPixelMode(olc::Pixel::ALPHA);
-		//Draw room
 		Clear(olc::BLACK);
+
+		/*
+		* ****************** *
+		* Render room layout *
+		* ****************** *
+		*/
 		for (int x = 0; x < 11; x++)
 		{
 			for (int y = 0; y < 11; y++)
@@ -81,13 +103,19 @@ public:
 				case 3:
 					DrawPartialSprite(olc::vi2d(x, y) * vBlockSize, sprTile.get(), olc::vi2d(2, 0) * vBlockSize, vBlockSize);
 					break;
+				case 4:
+					DrawPartialSprite(olc::vi2d(x, y) * vBlockSize, sprTile.get(), olc::vi2d(3, 0) * vBlockSize, vBlockSize);
+					break;
 				}
 			}
 		}
 
-		//Draw player
-		//Player movement
-		//Check and change velocity for intertia
+		/*
+		* ******************************* *
+		* Player movement and collisions  *
+		* ******************************* *
+		*/
+		//Check velocity direction and change to work with formula
 		if (vPlayerDir.x < 0.0f)
 		{
 			vPlayerDirState += olc::vf2d(-1.0f, 0.0f);
@@ -107,7 +135,7 @@ public:
 			vPlayerDirState += olc::vf2d(0.0f, 1.0f);
 		}
 
-		//Friction (could work with or statement??)
+		//Friction
 		if ((vPlayerDir.x + fFriction * fElapsedTime) > 0.0f)
 			vPlayerDir = { (vPlayerDir.x + fFriction * fElapsedTime) * vPlayerDirState.x, vPlayerDir.y };
 		else
@@ -119,7 +147,7 @@ public:
 
 		vPlayerDirState = { 0.0f, 0.0f };
 		
-		//Check for key press
+		//Check for key press and update velocity accordingly
 		if (GetKey(olc::Key::W).bHeld)
 		{
 			vPlayerDir = olc::vf2d(vPlayerDir.x, 0.0f);
@@ -146,17 +174,20 @@ public:
 		olc::vf2d vPlayerPotentialCenter = { vPlayerPotentialPos.x + (vPlayerSize.x / 2), vPlayerPotentialPos.y + (vPlayerSize.y / 2) };
 		auto bTestForCollision = [&](const olc::vf2d& point)
 		{
-			
 			olc::vi2d vTestPoint = vPlayerPotentialCenter + point * fPlayerRadius;
 			auto& tile = roomStructure[xQuadrant(vTestPoint)][yQuadrant(vTestPoint)];
 
-			if (tile == 0)
+			if (tile == 0 || tile == 2)
 			{
 				return false;
 			}
-			else if (tile == 2)
+			else if (tile == 4)
 			{
-				
+				if (!bInSpike)
+				{
+					playerHealth--;
+					bInSpike = true;
+				}
 				return false;
 			}
 			else
@@ -165,54 +196,71 @@ public:
 			}
 		};
 
+		//Update player location if no collision
 		if (!(bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(1, -1)) || bTestForCollision(olc::vf2d(-1, 1)) || bTestForCollision(olc::vf2d(1, 1))))
 			vPlayerPosition += vPlayerDir * fElapsedTime;
-		////Top stick
-		//if ((bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::W).bHeld)
-		//{
-		//	vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
-		//	vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
-		//}
-		////Left stick
-		//if ((bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(-1, 1))) && GetKey(olc::Key::A).bHeld)
-		//{
-		//	vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
-		//	vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
-		//}
-		////Right stick
-		//if ((bTestForCollision(olc::vf2d(-1, 1)) || bTestForCollision(olc::vf2d(1, 1))) && GetKey(olc::Key::S).bHeld)
-		//{
-		//	vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
-		//	vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
-		//}
-		////Bottom stick
-		//if ((bTestForCollision(olc::vf2d(1, 1)) || bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::D).bHeld)
-		//{
-		//	vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
-		//	vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
-		//}
+
+
+		//Old code that is meant to allow you to slide along walls but breaks when 3 or only 1 collision point triggers
+		//Top
+		if ((bTestForCollision(olc::vf2d(-1, -1)) && bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::W).bHeld)
+		{
+			vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
+			vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
+		}
+		//Left
+		if ((bTestForCollision(olc::vf2d(-1, -1)) && bTestForCollision(olc::vf2d(-1, 1))) && GetKey(olc::Key::A).bHeld)
+		{
+			vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
+			vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
+		}
+		//Right
+		if ((bTestForCollision(olc::vf2d(-1, 1)) && bTestForCollision(olc::vf2d(1, 1))) && GetKey(olc::Key::S).bHeld)
+		{
+			vPlayerPosition += olc::vf2d(vPlayerDir.x * fElapsedTime, 0.0f);
+			vPlayerDir = vPlayerDir * olc::vf2d(1.0f, 0.0f);
+		}
+		//Bottom
+		if ((bTestForCollision(olc::vf2d(1, 1)) && bTestForCollision(olc::vf2d(1, -1))) && GetKey(olc::Key::D).bHeld)
+		{
+			vPlayerPosition += olc::vf2d(0.0f, vPlayerDir.y * fElapsedTime);
+			vPlayerDir = vPlayerDir * olc::vf2d(0.0f, 1.0f);
+		}
 
 		DrawPartialSprite(vPlayerPosition, sprPlayer.get(), olc::vi2d(0, 0) * vPlayerSize, vPlayerSize);
+
+		/*
+		* ********************* *
+		* Player stats and misc *
+		* ********************* *
+		*/
+		//Health
+		for (int i = 0; i < playerHealth; i++)
+		{
+			DrawPartialSprite(olc::vi2d(328 - i * 16, 8), sprArtifacts.get(), olc::vi2d(0, 0) * vArtifactSize, vArtifactSize);
+		}
+
 		SetPixelMode(olc::Pixel::NORMAL);
 		return true;
 	}
 
+	//Get x coord in level roomStructure grid
 	int xQuadrant(olc::vf2d input)
 	{
-		int xTemp = (int)input.x;
-		while (xTemp % 32 != 0)
-			xTemp--;
-		xTemp = xTemp / 32;
+		int xTemp = (int)input.x / 32;
 		return xTemp;
 	}
 
+	//Get y coord in level roomStructure grid
 	int yQuadrant(olc::vf2d input)
 	{
-		int yTemp = (int)input.y;
-		while (yTemp % 32 != 0)
-			yTemp--;
-		yTemp = yTemp / 32;
+		int yTemp = (int)input.y / 32;
 		return yTemp;
+	}
+
+	void takeDamage()
+	{
+
 	}
 };
 
