@@ -173,7 +173,7 @@ public:
 		//Test for collision
 		olc::vf2d vPlayerPotentialPos = vPlayerPosition + (vPlayerDir * fElapsedTime);
 		olc::vf2d vPlayerPotentialCenter = { vPlayerPotentialPos.x + (vPlayerSize.x / 2), vPlayerPotentialPos.y + (vPlayerSize.y / 2) };
-		auto bTestForCollision = [&](const olc::vf2d& point)
+		auto bTestForCollision = [&](const olc::vf2d& point, float mode)
 		{
 			olc::vi2d vTestPoint = vPlayerPotentialCenter + point * fPlayerRadius;
 			auto& tile = roomStructure[xQuadrant(vTestPoint)][yQuadrant(vTestPoint)];
@@ -201,7 +201,7 @@ public:
 		};
 
 		//Update player location if no collision
-		if (!(bTestForCollision(olc::vf2d(-1, -1)) || bTestForCollision(olc::vf2d(1, -1)) || bTestForCollision(olc::vf2d(-1, 1)) || bTestForCollision(olc::vf2d(1, 1))))
+		if (!(bTestForCollision(olc::vf2d(-1, -1), 0.0f) || bTestForCollision(olc::vf2d(1, -1), 0.0f) || bTestForCollision(olc::vf2d(-1, 1), 0.0f) || bTestForCollision(olc::vf2d(1, 1), 0.0f)))
 			vPlayerPosition += vPlayerDir * fElapsedTime;
 
 
