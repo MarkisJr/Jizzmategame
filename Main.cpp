@@ -244,10 +244,6 @@ public:
 			DrawPartialSprite(olc::vi2d(328 - i * 16, 8), sprArtifacts.get(), olc::vi2d(0, 0) * vArtifactSize, vArtifactSize);
 		}
 
-		//Death screen
-		if (playerHealth < 1)
-			return false;
-
 		SetPixelMode(olc::Pixel::NORMAL);
 		return true;
 	}
